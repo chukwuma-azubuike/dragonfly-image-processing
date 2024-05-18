@@ -40,9 +40,9 @@ const App: React.FC = () => {
 
     // Handle check task status
     useEffect(() => {
-        if (!processingStarted?.length) {
-            setInterval(() => {
-                processingStarted.map(process => {
+        const unsubscribe = setInterval(() => {
+            if (!processingStarted?.length) {
+                processingStarted.forEach(process => {
                     const { id, taskId } = process;
 
                     // Dispatch check task status action
@@ -50,8 +50,12 @@ const App: React.FC = () => {
                         dispatch(checkTaskStatus({ taskId, id }));
                     }
                 });
-            }, taskCheckInterval);
-        }
+            }
+        }, taskCheckInterval);
+
+        return () => {
+            clearInterval(unsubscribe);
+        };
     }, [processingStarted]);
 
     // Simulate Upload progress
