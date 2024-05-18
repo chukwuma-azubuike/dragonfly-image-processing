@@ -11,8 +11,8 @@ interface IProgressList {
 const ProgressList: React.FC<IProgressList> = ({ progresses }) => {
     return (
         <div className="flex flex-col items-center justify-center w-full">
-            {progresses.map(progress => (
-                <ProgressBar {...progress} />
+            {progresses.map((progress, index) => (
+                <ProgressBar key={index} {...progress} />
             ))}
         </div>
     );
