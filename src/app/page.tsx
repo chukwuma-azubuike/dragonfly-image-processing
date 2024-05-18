@@ -1,46 +1,159 @@
-import Image from 'next/image';
+'use client';
 
-export default function Home() {
-	return (
-		<main className="flex min-h-screen flex-col items-center justify-between p-24">
-			<div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-				<p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-					Dragonfly Image Processing
-				</p>
-				<div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-					<a
-						className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-						href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						By <h2 className={`mb-3 text-2xl font-semibold`}>Chukwuma Azubuike</h2>
-					</a>
-				</div>
-			</div>
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { FileRejection } from 'react-dropzone';
 
-			<div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-				{/* Drop zone here */}
-			</div>
+import api from '@/utils/api';
+import { checkTaskStatus, dataUpload } from '@/store/actions/dataUpload';
+import { selectAllUploadProgresses } from '@/store/selectors/dataUpload';
 
-			<div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-				<a
-					href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-					className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<h2 className={`mb-3 text-2xl font-semibold`}>
-						Docs{' '}
-						<span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-							-&gt;
-						</span>
-					</h2>
-					<p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-						Find in-depth information about Next.js features and API.
-					</p>
-				</a>
-			</div>
-		</main>
-	);
-}
+import Dropzone from '@/components/dropzone';
+import ProgressList from '@/components/progressList';
+
+const maxUploads: number = 10;
+const taskCheckInterval: number = 2000;
+
+const App: React.FC = () => {
+    // Initialise function for dispatching actions
+    const dispatch = useDispatch();
+
+    // Fetch progress status for each upload instance from store
+    const progresses = useSelector(selectAllUploadProgresses);
+
+    // Uploads that have started image processing stage
+    const processingStarted = useMemo(
+        () => progresses.filter(progress => progress.status === 'processing_started'),
+        [progresses]
+    );
+
+    // Initialise local state management to handle dropped files
+    const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
+
+    // Simulated progresses
+    const [simulatedProgresses, setSimulatedProgresses] = useState<any[]>([] as any);
+
+    // Simulate trigger
+    const [startUploadTrigger, setStartUploadTrigger] = useState<boolean>(false);
+
+    // Handle check task status
+    useEffect(() => {
+        if (!processingStarted?.length) {
+            setInterval(() => {
+                processingStarted.map(process => {
+                    const { id, taskId } = process;
+
+                    // Dispatch check task status action
+                    if (id && taskId) {
+                        dispatch(checkTaskStatus({ taskId, id }));
+                    }
+                });
+            }, taskCheckInterval);
+        }
+    }, [processingStarted]);
+
+    // Simulate Upload progress
+    useEffect(() => {
+        const unsubscribe = setInterval(() => {
+            if (startUploadTrigger) {
+                setSimulatedProgresses(prev => {
+                    return [
+                        ...prev.map(file => {
+                            return {
+                                ...file,
+                                status: file.uploadingPercentage >= 100 ? 'finished' : 'uploading',
+                                uploadingPercentage: file.uploadingPercentage + Math.floor(Math.random() * 3),
+                            };
+                        }),
+                    ];
+                });
+            }
+        }, 1000);
+
+        if (!startUploadTrigger) {
+            clearInterval(unsubscribe);
+        }
+
+        return () => {
+            clearInterval(unsubscribe);
+        };
+    }, [startUploadTrigger]);
+
+    useEffect(() => {
+        if (queuedFiles.length) {
+            setSimulatedProgresses(() => {
+                return [
+                    ...queuedFiles.map(file => {
+                        return {
+                            label: `${file.name.substring(0, 10)}.jpeg`,
+                            uploadingPercentage: 0,
+                            status: 'dropped',
+                        };
+                    }),
+                ];
+            });
+        }
+    }, [queuedFiles.length]);
+
+    // Handle upload process
+    const startUpload = useCallback(() => {
+        // Trigger simulation
+        setStartUploadTrigger(true);
+
+        // Iterate over queued files to dispatch an upload action for each
+        queuedFiles.forEach(async file => {
+            // Convert file to binary data
+            const arrayBuffer = await file.arrayBuffer();
+            const binaryData = new Uint8Array(arrayBuffer);
+
+            try {
+                // Fetch key and url for file staging process
+                const { url, key } = (await api.generateURL()).data;
+
+                // Dispatch upload action for file & pass arguments for the processing step
+                dispatch(
+                    dataUpload({ name: file.name, maxUploads, url, processingKey: key }, api.uploadFile, binaryData)
+                );
+            } catch (err) {
+                // Log error to remote service (e.g Sentry) or display in ui
+            }
+        });
+    }, [queuedFiles, maxUploads]);
+
+    const handleFileDropAccepted = useCallback((files: Array<File>) => {
+        // Update list of files with new files dropped
+        setQueuedFiles(prevFiles => [...prevFiles, ...files]);
+    }, []);
+
+    const handleFileDropRejected = (files: Array<FileRejection>) => {
+        // Handle file rejection
+    };
+
+    return (
+        <main className="flex min-h-screen flex-col items-center space-y-16 py-24 px-8 max-w-[700px] m-auto select-none">
+            <Dropzone
+                disabled={startUploadTrigger}
+                handleFileDropRejected={handleFileDropRejected}
+                handleFileDropAccepted={handleFileDropAccepted}
+            />
+            <button
+                disabled={startUploadTrigger || !queuedFiles.length}
+                className={`relative inline-flex items-center justify-center p-4 px-6 py-3 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden font-medium transition duration-300 ease-out border-2 border-green-600 ${
+                    startUploadTrigger ? '' : 'hover:text-green-600 hover:border-white active:scale-105'
+                } rounded-full shadow-md group`}
+                onClick={startUpload}
+            >
+                <span
+                    className={`flex items-center justify-center w-full h-full transition-all transform ${
+                        startUploadTrigger ? '' : 'group-hover:translate-y-px'
+                    } ease`}
+                >
+                    Start upload
+                </span>
+            </button>
+            <ProgressList progresses={progresses.length ? progresses : simulatedProgresses} />
+        </main>
+    );
+};
+
+export default App;
