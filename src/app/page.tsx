@@ -13,8 +13,8 @@ import Dropzone from '@/components/dropzone';
 import ProgressList from '@/components/progressList';
 import Button from '@/components/button';
 
-const maxUploads: number = 10;
-const taskCheckInterval: number = 2000;
+const maxUploads: number = 10; // Maximum count of concurrent uploads
+const taskCheckInterval: number = 2000; // Check every 2 seconds
 
 const App: React.FC = () => {
     // Initialise function for dispatching actions
@@ -26,6 +26,12 @@ const App: React.FC = () => {
     // Uploads that have the started image processing stage
     const processingStarted = useMemo(
         () => progresses.filter(progress => progress.status === 'processing_started'),
+        [progresses]
+    );
+
+    // Uploads that have finished the image processing stage
+    const allProcessingFinished = useMemo(
+        () => progresses.filter(progress => progress.status === 'processing_finished').length === progresses.length,
         [progresses]
     );
 
@@ -41,11 +47,12 @@ const App: React.FC = () => {
     // Handle check task status
     useEffect(() => {
         const unsubscribe = setInterval(() => {
-            if (!processingStarted?.length) {
+            if (processingStarted?.length) {
+                // Iterate over all uploads that have started image processing task
                 processingStarted.forEach(process => {
                     const { id, taskId } = process;
 
-                    // Dispatch check task status action
+                    // Dispatch check task status action for each
                     if (id && taskId) {
                         dispatch(checkTaskStatus({ taskId, id }));
                     }
@@ -53,10 +60,17 @@ const App: React.FC = () => {
             }
         }, taskCheckInterval);
 
+        // Discontinue status check once all uploads have finished processing
+        if (allProcessingFinished) {
+            clearInterval(unsubscribe);
+            return;
+        }
+
+        // Clean up function to avoid any memory leaks
         return () => {
             clearInterval(unsubscribe);
         };
-    }, [processingStarted]);
+    }, [processingStarted, allProcessingFinished]);
 
     // Simulate Upload progress
     useEffect(() => {
@@ -112,11 +126,6 @@ const App: React.FC = () => {
             const formData = new FormData();
             formData.append('file', file);
 
-            //TODO: WIll test
-            // Convert file to binary data
-            // const arrayBuffer = await file.arrayBuffer();
-            // const binaryData = new Uint8Array(arrayBuffer);
-
             try {
                 // Fetch key and url for file staging process
                 const { url, key } = (await api.generateURL()).data;
@@ -142,7 +151,7 @@ const App: React.FC = () => {
     };
 
     return (
-        <main className="flex min-h-screen flex-col items-center space-y-16 py-24 px-8 max-w-[700px] m-auto select-none">
+        <main className="flex min-h-screen flex-col items-center space-y-16 py-24 px-8 max-w-[600px] m-auto select-none">
             <Dropzone
                 disabled={startUploadTrigger}
                 accept={{ 'image/jpeg': ['.jpeg', '.jpg'] }}

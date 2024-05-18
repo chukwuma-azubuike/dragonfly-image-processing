@@ -26,7 +26,6 @@ function* createUploader(
     const chan: EventChannel<any> = eventChannel((emitter: (input: any | END) => void) => {
         // Capture upload progress. The "onUploadProgress" function is accepted as an optional config parameter in axios
         function onUploadProgress(progressEvent: AxiosProgressEvent): void {
-            console.log({ progressEvent });
             // Emit progress to listener
             emitter(progressEvent);
         }

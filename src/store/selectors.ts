@@ -42,11 +42,6 @@ export const selectAllUploadProgresses: Selector<Array<IProgress>> = createSelec
                 uploadingPercentage = Math.round((progress.loaded / progress.total) * 100);
             }
 
-            if (processing) {
-                // TODO: To be determined
-                // processingPercentage = processing.percentage;
-            }
-
             return {
                 id: upload.id,
                 label: upload.name,
@@ -55,7 +50,7 @@ export const selectAllUploadProgresses: Selector<Array<IProgress>> = createSelec
                 taskId: upload.taskId,
                 status: upload.status,
                 cancel: upload.cancel,
-                processing: upload.processing,
+                processing,
             };
         });
     }

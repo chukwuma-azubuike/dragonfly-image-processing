@@ -534,6 +534,9 @@ video {
 .max-w-\[700px\] {
   max-width: 700px;
 }
+.max-w-\[600px\] {
+  max-width: 600px;
+}
 .scale-110 {
   --tw-scale-x: 1.1;
   --tw-scale-y: 1.1;
