@@ -17,7 +17,7 @@ export type IUploadStatus =
 
 export interface IProcessing {
     error?: Error;
-    status?: string;
+    status?: 'SUCCEEDED' | 'FAILED';
 }
 
 export interface IUpload {
@@ -97,7 +97,7 @@ const dataUploadSlice = createSlice({
                 state.uploads[payload.id].status = 'processing_started';
                 state.uploads[payload.id].processing = {
                     error: undefined,
-                    status: 'processing_started',
+                    status: undefined,
                 };
             }
         },

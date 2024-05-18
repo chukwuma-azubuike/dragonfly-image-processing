@@ -1,9 +1,11 @@
 'use client';
 
+import { IProcessing } from '@/store/reducers';
 import axios, { AxiosPromise, AxiosRequestConfig } from 'axios';
 
 const api_key = 'd8352701-03d5-4f15-a187-0c1de21ee37f'; // Set this as an environment variable
-const base_url = 'https://dev.api.dragonflyai.co/pipeline';
+const proxy_url = 'https://thingproxy.freeboard.io/fetch/';
+const base_url = `${proxy_url}https://dev.api.dragonflyai.co/pipeline`;
 
 class Api {
     generateURL = (config?: AxiosRequestConfig): AxiosPromise<{ url: string; key: string }> => {
@@ -16,7 +18,7 @@ class Api {
     };
 
     uploadFile = (url: string, formData: BinaryData, config?: AxiosRequestConfig): AxiosPromise<unknown> => {
-        return axios.put(url, {
+        return axios.put(`${proxy_url}${url}`, {
             data: formData,
             headers: {
                 'Content-Type': 'image/jpeg',
@@ -41,7 +43,10 @@ class Api {
         });
     };
 
-    checkProcessingFileStatus = (taskId: string, config?: AxiosRequestConfig): AxiosPromise<unknown> => {
+    checkProcessingFileStatus = (
+        taskId: string,
+        config?: AxiosRequestConfig
+    ): AxiosPromise<Pick<IProcessing, 'status'>> => {
         const data = { taskId };
 
         return axios.post(`${base_url}/assets/status`, {

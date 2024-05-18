@@ -1,6 +1,6 @@
 import { createSelector } from 'reselect';
-import { IState, Selector } from '..';
-import { IDataUploadState, IProcessing, IUpload, IUploadStatus } from '../reducers/dataUpload';
+import { IState, Selector } from '.';
+import { IDataUploadState, IProcessing, IUpload, IUploadStatus } from './reducers';
 
 export interface IProgress {
     id: string;

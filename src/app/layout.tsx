@@ -2,9 +2,10 @@
 
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { ThemeProvider } from '@/provider/theme';
 import store from '@/store';
 import { Provider } from 'react-redux';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -14,11 +15,10 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <Provider store={store}>
-                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-                    <body className={inter.className}>{children}</body>
-                </ThemeProvider>
+                <body className={inter.className}>{children}</body>
+                <ToastContainer theme="dark" position="top-right" />
             </Provider>
         </html>
     );

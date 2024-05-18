@@ -36,7 +36,7 @@ const Dropzone: React.FC<IDropzoneProps> = props => {
         // Handle error here
     };
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    const { getRootProps, getInputProps, isDragActive, } = useDropzone({
         onDropAccepted,
         onDropRejected,
         maxFiles,
@@ -54,7 +54,9 @@ const Dropzone: React.FC<IDropzoneProps> = props => {
             } ${
                 isDragActive && !disabled
                     ? 'border-slate-700 bg-zinc-400 transform scale-110'
-                    : `border-gray-600 bg-gray-500 ${disabled ? '' : 'hover:border-grey-600 hover:bg-gray-400'}`
+                    : `border-gray-600 bg-gray-500 ${
+                          disabled ? 'cursor-not-allowed' : 'hover:border-grey-600 hover:bg-gray-400'
+                      }`
             }`}
         >
             <input {...getInputProps()} type="file" />

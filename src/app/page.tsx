@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { FileRejection } from 'react-dropzone';
+import { toast } from 'react-toastify';
 
 import api from '@/utils/api';
-import { checkTaskStatus, dataUpload } from '@/store/actions/dataUpload';
-import { selectAllUploadProgresses } from '@/store/selectors/dataUpload';
+import { checkTaskStatus, dataUpload } from '@/store/actions';
+import { selectAllUploadProgresses } from '@/store/selectors';
 
 import Dropzone from '@/components/dropzone';
 import ProgressList from '@/components/progressList';
@@ -21,7 +22,7 @@ const App: React.FC = () => {
     // Fetch progress status for each upload instance from store
     const progresses = useSelector(selectAllUploadProgresses);
 
-    // Uploads that have started image processing stage
+    // Uploads that have the started image processing stage
     const processingStarted = useMemo(
         () => progresses.filter(progress => progress.status === 'processing_started'),
         [progresses]
@@ -102,9 +103,14 @@ const App: React.FC = () => {
 
         // Iterate over queued files to dispatch an upload action for each
         queuedFiles.forEach(async file => {
+            // Create form data
+            const formData = new FormData();
+            formData.append('file', file);
+
+            //TODO: WIll test
             // Convert file to binary data
-            const arrayBuffer = await file.arrayBuffer();
-            const binaryData = new Uint8Array(arrayBuffer);
+            // const arrayBuffer = await file.arrayBuffer();
+            // const binaryData = new Uint8Array(arrayBuffer);
 
             try {
                 // Fetch key and url for file staging process
@@ -112,10 +118,11 @@ const App: React.FC = () => {
 
                 // Dispatch upload action for file & pass arguments for the processing step
                 dispatch(
-                    dataUpload({ name: file.name, maxUploads, url, processingKey: key }, api.uploadFile, binaryData)
+                    dataUpload({ name: file.name, maxUploads, url, processingKey: key }, api.uploadFile, formData)
                 );
-            } catch (err) {
+            } catch (err: any) {
                 // Log error to remote service (e.g Sentry) or display in ui
+                toast.error(err.message);
             }
         });
     }, [queuedFiles, maxUploads]);
@@ -133,6 +140,7 @@ const App: React.FC = () => {
         <main className="flex min-h-screen flex-col items-center space-y-16 py-24 px-8 max-w-[700px] m-auto select-none">
             <Dropzone
                 disabled={startUploadTrigger}
+                accept={{ image: ['image/jpeg'] }}
                 handleFileDropRejected={handleFileDropRejected}
                 handleFileDropAccepted={handleFileDropAccepted}
             />

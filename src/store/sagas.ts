@@ -1,14 +1,14 @@
 import { AxiosProgressEvent, AxiosPromise } from 'axios';
 import { buffers, channel, Channel, END, eventChannel, EventChannel } from 'redux-saga';
 import { all, call, fork, put, take } from 'typed-redux-saga';
-import _ from 'lodash';
+import spread from 'lodash/spread';
 
-import { checkTaskStatus, dataUpload } from '../actions/dataUpload';
-import { dataUploadActions } from '../reducers/dataUpload';
+import { checkTaskStatus, dataUpload } from './actions';
+import { IProcessing, dataUploadActions } from './reducers';
 import api from '@/utils/api';
+import { toast } from 'react-toastify';
 
 type AddToUploadQueueAction = ReturnType<typeof dataUploadActions.addToUploadQueue>;
-type UpdateTaskProcessingProgress = ReturnType<typeof dataUploadActions.updateTaskProcessingProgress>;
 
 // Api call to start file processing
 const processFile = async (processingKey: string): Promise<{ taskId: string }> => {
@@ -32,9 +32,9 @@ function* createUploader(
         }
 
         // This function returns a function that invokes "apiMethod" with it's arguments spread over an array.
-        const fn: (...args: any[]) => Promise<any> = _.spread(apiMethod);
+        const invokeApiMethod: (...args: any[]) => Promise<any> = spread(apiMethod);
 
-        fn(
+        invokeApiMethod(
             /**
              * "apiMethod" called with it's Arguments spread over as an array
              */
@@ -50,9 +50,10 @@ function* createUploader(
                 // Emit success event to listener
                 emitter({ type: 'successful', response });
             })
-            .catch(() => {
+            .catch((error: Error) => {
                 // Emit failure event to listener
                 emitter({ type: 'failure', id });
+                toast.error(error.message);
             })
             .finally(() => {
                 // Emit an abort signal to listener
@@ -102,7 +103,7 @@ function* createUploader(
                 yield* put(dataUploadActions.markUploadFailed({ id }));
             }
         }
-    } catch (err) {
+    } catch (error) {
         // Handle error (Maybe send to remote error logger like Sentry)
     }
 }
@@ -122,6 +123,7 @@ function* handleUpload(action: AddToUploadQueueAction): Generator {
         // Call createUploader function with arguments: id, url, apiMethod, args, processingKey
         yield* call(createUploader, id, url, apiMethod, args, processingKey);
     } catch (error: any) {
+        toast.error(error.message);
         // Mark upload a failed in store
         yield* put(dataUploadActions.markUploadFailed({ id, error }));
     }
@@ -136,19 +138,20 @@ function* uploadWorker(queue: Channel<AddToUploadQueueAction>): Generator {
             // Blocking call to process each action with FIFO strategy
             yield* call(handleUpload, uploadAction);
         }
-    } catch (err) {
+    } catch (error) {
         // Handle error (Maybe send to remote error logger like Sentry)
     }
 }
 
-// Create channel queue with expanding buffer to handle an unknown number of queue count
+// Create channel queue with expanding buffer
 const createUploadQueue = () => channel<AddToUploadQueueAction>(buffers.expanding());
 
 // Handle upload queues
 function* uploadQueueHandler(): Generator {
     const queue = yield* call(createUploadQueue);
 
-    const maxConcurrentUploads = 10; // To be passed as part of the action payload.
+    // Set maximum concurrent uploads to limit burden on server & client
+    const maxConcurrentUploads = 10;
 
     // Spawn upload worker for each upload queue
     for (let i = 0; i <= maxConcurrentUploads; i++) {
@@ -166,68 +169,41 @@ function* uploadQueueHandler(): Generator {
             yield* put(newAction);
             yield* put(queue, newAction);
         }
-    } catch (err) {
+    } catch (error) {
         // Handle error
     } finally {
     }
 }
-
-function* handleStatusCheck(action: UpdateTaskProcessingProgress): Generator {
-    const { id, taskId } = action.payload;
-
-    // Exit if invalid
-    if (!id || !taskId) {
-        return;
-    }
-
-    try {
-        // Call status check api with argument: taskId
-        const processingStatus = yield* call(api.checkProcessingFileStatus, taskId);
-
-        // Update the status of the processing task
-        yield* put(dataUploadActions.updateTaskProcessingProgress({ processing: processingStatus as any, taskId, id }));
-    } catch (error: any) {
-        // Mark upload a failed in store
-        yield* put(dataUploadActions.markProcessingFailed({ id, error }));
-    }
-}
-
-function* statusCheckWorker(queue: Channel<UpdateTaskProcessingProgress>): Generator {
-    try {
-        while (true) {
-            // Listen for individual action from queue
-            const checkStatusAction = yield* take(queue);
-
-            // Blocking call to process each action with FIFO strategy
-            yield* call(handleStatusCheck, checkStatusAction);
-        }
-    } catch (err) {
-        // Handle error (Maybe send to remote error logger like Sentry)
-    }
-}
-
-// Create channel queue with expanding buffer to handle an unknown number of queue count
-const createTaskCheckQueue = () => channel<UpdateTaskProcessingProgress>(buffers.expanding());
 
 // Handle task status check
 function* taskStatusCheckHandler(): Generator {
-    const queue = yield* call(createTaskCheckQueue);
+    while (true) {
+        // Listen for dispatched checkTaskStatus actions
+        const {
+            payload: { id, taskId },
+        } = yield* take<ReturnType<typeof checkTaskStatus>>(checkTaskStatus.type);
 
-    const maxConcurrentTaskChecks = 10;
+        if (id && taskId) {
+            try {
+                // Call status check api with argument: taskId
+                const processingStatus = (yield* call(api.checkProcessingFileStatus, taskId)) as unknown as Pick<
+                    IProcessing,
+                    'status'
+                >;
 
-    // Spawn status check worker for each action queue
-    for (let i = 0; i <= maxConcurrentTaskChecks; i++) {
-        yield* fork(statusCheckWorker, queue);
-    }
-
-    try {
-        while (true) {
-            // Listen for dispatched checkTaskStatus actions
-            const { payload } = yield* take<ReturnType<typeof checkTaskStatus>>(checkTaskStatus.type);
+                // Update the status of the processing task
+                yield* put(
+                    dataUploadActions.updateTaskProcessingProgress({
+                        processing: processingStatus,
+                        taskId,
+                        id,
+                    })
+                );
+            } catch (error: any) {
+                // Mark upload a failed in store
+                toast.error(error?.message || 'Unable to check task status');
+            }
         }
-    } catch (err) {
-        // Handle error
-    } finally {
     }
 }
 

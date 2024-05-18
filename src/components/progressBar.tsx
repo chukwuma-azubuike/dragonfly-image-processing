@@ -1,6 +1,6 @@
 'use client';
 
-import { IProgress } from '@/store/selectors/dataUpload';
+import { IProgress } from '@/store/selectors';
 import React from 'react';
 
 interface ProgressBarProps extends IProgress {}

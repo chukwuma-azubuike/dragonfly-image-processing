@@ -1,8 +1,9 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AxiosPromise } from 'axios';
 import { v4 as uuid } from 'uuid';
-import { IUploadStatus } from '../reducers/dataUpload';
+import { IUploadStatus } from './reducers';
 
+// Data upload action creator
 export const dataUpload = createAction(
     'dataUpload/upload',
     <Fn extends (...args: any[]) => AxiosPromise>(
@@ -35,6 +36,7 @@ export const dataUpload = createAction(
     }
 );
 
+// Task status check action creator
 export const checkTaskStatus = createAction(
     'dataUpload/checkTaskStatus',
     ({ taskId, id }: { taskId: string; id: string }) => {

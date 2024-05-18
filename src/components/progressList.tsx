@@ -2,7 +2,7 @@
 
 import React from 'react';
 import ProgressBar from './progressBar';
-import { IProgress } from '@/store/selectors/dataUpload';
+import { IProgress } from '@/store/selectors';
 
 interface IProgressList {
     progresses: Array<IProgress>;
