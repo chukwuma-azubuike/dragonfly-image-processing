@@ -93,7 +93,7 @@ const App: React.FC = () => {
                         return {
                             label: `${file.name.substring(0, 10)}.jpeg`,
                             uploadingPercentage: 0,
-                            status: 'dropped',
+                            status: 'queued',
                         };
                     }),
                 ];
@@ -145,7 +145,7 @@ const App: React.FC = () => {
         <main className="flex min-h-screen flex-col items-center space-y-16 py-24 px-8 max-w-[700px] m-auto select-none">
             <Dropzone
                 disabled={startUploadTrigger}
-                accept={{ image: ['image/jpeg'] }}
+                accept={{ 'image/jpeg': ['.jpeg', '.jpg'] }}
                 handleFileDropRejected={handleFileDropRejected}
                 handleFileDropAccepted={handleFileDropAccepted}
             />
