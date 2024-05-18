@@ -38,10 +38,6 @@ const App: React.FC = () => {
     // Initialise local state management to handle dropped files
     const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
 
-    // Simulated progresses
-    const [simulatedProgresses, setSimulatedProgresses] = useState<any[]>([] as any);
-
-    // Simulate trigger
     const [startUploadTrigger, setStartUploadTrigger] = useState<boolean>(false);
 
     // Handle check task status
@@ -72,49 +68,6 @@ const App: React.FC = () => {
         };
     }, [processingStarted, allProcessingFinished]);
 
-    // Simulate Upload progress
-    useEffect(() => {
-        const unsubscribe = setInterval(() => {
-            if (startUploadTrigger) {
-                setSimulatedProgresses(prev => {
-                    return [
-                        ...prev.map(file => {
-                            return {
-                                ...file,
-                                status: file.uploadingPercentage >= 100 ? 'finished' : 'uploading',
-                                uploadingPercentage: file.uploadingPercentage + Math.floor(Math.random() * 3),
-                            };
-                        }),
-                    ];
-                });
-            }
-        }, 1000);
-
-        if (!startUploadTrigger) {
-            clearInterval(unsubscribe);
-        }
-
-        return () => {
-            clearInterval(unsubscribe);
-        };
-    }, [startUploadTrigger]);
-
-    useEffect(() => {
-        if (queuedFiles.length) {
-            setSimulatedProgresses(() => {
-                return [
-                    ...queuedFiles.map(file => {
-                        return {
-                            label: `${file.name.substring(0, 10)}.jpeg`,
-                            uploadingPercentage: 0,
-                            status: 'queued',
-                        };
-                    }),
-                ];
-            });
-        }
-    }, [queuedFiles.length]);
-
     // Handle upload process
     const startUpload = useCallback(() => {
         // Trigger simulation
@@ -137,6 +90,7 @@ const App: React.FC = () => {
             } catch (err: any) {
                 // Log error to remote service (e.g Sentry) or display in ui
                 toast.error(err.message);
+                setStartUploadTrigger(false);
             }
         });
     }, [queuedFiles, maxUploads]);
@@ -153,7 +107,6 @@ const App: React.FC = () => {
     return (
         <main className="flex min-h-screen flex-col items-center space-y-16 py-24 px-8 max-w-[600px] m-auto select-none">
             <Dropzone
-                disabled={startUploadTrigger}
                 accept={{ 'image/jpeg': ['.jpeg', '.jpg'] }}
                 handleFileDropRejected={handleFileDropRejected}
                 handleFileDropAccepted={handleFileDropAccepted}
@@ -161,7 +114,11 @@ const App: React.FC = () => {
             <Button onClick={startUpload} disabled={startUploadTrigger || !queuedFiles.length}>
                 Start upload
             </Button>
-            <ProgressList progresses={progresses.length ? progresses : simulatedProgresses} />
+            {startUploadTrigger && progresses?.length ? (
+                <ProgressList progresses={progresses} />
+            ) : (
+                <ProgressList files={queuedFiles} />
+            )}
         </main>
     );
 };

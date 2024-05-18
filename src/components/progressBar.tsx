@@ -3,7 +3,9 @@
 import { IProgress } from '@/store/selectors';
 import React from 'react';
 
-interface ProgressBarProps extends IProgress {}
+interface ProgressBarProps extends Partial<IProgress> {
+    file?: File;
+}
 
 const getColor = (percentage: number) => {
     if (percentage < 30) return 'bg-red-600';
@@ -13,8 +15,14 @@ const getColor = (percentage: number) => {
     return 'bg-green-600';
 };
 
-const ProgressBar: React.FC<ProgressBarProps> = ({ label, uploadingPercentage, processingPercentage, status }) => {
-    let percentage: number = 0 || (uploadingPercentage as number); // Revert after simulation test
+const ProgressBar: React.FC<ProgressBarProps> = ({
+    label,
+    uploadingPercentage,
+    processingPercentage,
+    status,
+    file,
+}) => {
+    let percentage: number = 0;
 
     if (status === 'uploading' || status === 'finished') {
         percentage = uploadingPercentage as number;
@@ -27,12 +35,14 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ label, uploadingPercentage, p
     return (
         <div className="w-full p-1">
             <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium text-gray-200">
-                    {label} {'  ('}
-                    {status}
-                    {')'}
+                <text className="text-sm font-medium text-gray-200 truncate w-9/12">
+                    {label || file?.name}
+                </text>
+                <span className="text-sm font-medium text-gray-200 text-right w-max">
+                    {'  ('}
+                    {status || 'queued'}
+                    {')'} {`${percentage <= 100 ? percentage : 100}%`}
                 </span>
-                <span className="text-sm font-medium text-gray-200">{`${percentage <= 100 ? percentage : 100}%`}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-4">
                 <div
