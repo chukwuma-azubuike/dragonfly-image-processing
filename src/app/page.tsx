@@ -11,6 +11,7 @@ import { selectAllUploadProgresses } from '@/store/selectors';
 
 import Dropzone from '@/components/dropzone';
 import ProgressList from '@/components/progressList';
+import Button from '@/components/button';
 
 const maxUploads: number = 10;
 const taskCheckInterval: number = 2000;
@@ -144,21 +145,9 @@ const App: React.FC = () => {
                 handleFileDropRejected={handleFileDropRejected}
                 handleFileDropAccepted={handleFileDropAccepted}
             />
-            <button
-                disabled={startUploadTrigger || !queuedFiles.length}
-                className={`relative inline-flex items-center justify-center p-4 px-6 py-3 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden font-medium transition duration-300 ease-out border-2 border-green-600 ${
-                    startUploadTrigger ? '' : 'hover:text-green-600 hover:border-white active:scale-105'
-                } rounded-full shadow-md group`}
-                onClick={startUpload}
-            >
-                <span
-                    className={`flex items-center justify-center w-full h-full transition-all transform ${
-                        startUploadTrigger ? '' : 'group-hover:translate-y-px'
-                    } ease`}
-                >
-                    Start upload
-                </span>
-            </button>
+            <Button onClick={startUpload} disabled={startUploadTrigger || !queuedFiles.length}>
+                Start upload
+            </Button>
             <ProgressList progresses={progresses.length ? progresses : simulatedProgresses} />
         </main>
     );
