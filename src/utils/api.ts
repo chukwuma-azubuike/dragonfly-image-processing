@@ -1,10 +1,8 @@
-'use client';
-
 import { IProcessing } from '@/store/reducers';
 import axios, { AxiosPromise, AxiosRequestConfig } from 'axios';
 
-const api_key = 'd8352701-03d5-4f15-a187-0c1de21ee37f'; // Set this as an environment variable
-const base_url = 'https://dev.api.dragonflyai.co/pipeline';
+const base_url = process.env.NEXT_PUBLIC_BASE_URL;
+const api_key = process.env.NEXT_PUBLIC_API_KEY;
 
 class Api {
     generateURL = (config?: AxiosRequestConfig): AxiosPromise<{ url: string; key: string }> => {

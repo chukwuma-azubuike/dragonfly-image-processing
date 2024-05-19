@@ -1,53 +1,37 @@
-# Ignore compiled stuff
-/app
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Ignore node_modules in this directory
-node_modules/
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
 
-# Ignore all following pre-dot directories and files
-.sass-cache
-.tscache
-.next
+# testing
+/coverage
 
-# Ignore sublime specific
-# cache files for sublime text
-*.tmlanguage.cache
-*.tmPreferences.cache
-*.stTheme.cache
-*.sublime-workspace
-*.sublime-project
-*.map
+# next.js
+/.next/
+/out/
 
-# sftp configuration file
-sftp-config.json
+# production
+/build
 
-# DW Dreamweaver added files
-_notes
-dwsync.xml
-
-# Windows image file caches
-Thumbs.db
-ehthumbs.db
-
-# OSX specific
+# misc
 .DS_Store
-.AppleDouble
-.LSOverride
-._*
+*.pem
 
-# Ignore log files
-.log
-.map
-.tmp.txt
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Testing
-test/backstop/data/_test
-test/backstop/data/report
-/test/backstop/_backstop.json
+# local env files
+.env*.local
+.env
 
-# Environment-specific config files
-config.json
+# vercel
+.vercel
 
-# Ignore package files
-locale.zip
-dump.rdb
+# typescript
+*.tsbuildinfo
+next-env.d.ts
