@@ -16,10 +16,12 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <Provider store={store}>
-                <body className={inter.className}>{children}</body>
-                <ToastContainer theme="dark" position="top-right" />
-            </Provider>
+            <body className={inter.className}>
+                <Provider store={store}>
+                    {children}
+                    <ToastContainer theme="dark" position="top-right" />
+                </Provider>
+            </body>
         </html>
     );
 }

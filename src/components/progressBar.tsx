@@ -15,29 +15,13 @@ const getColor = (percentage: number) => {
     return 'bg-green-600';
 };
 
-const ProgressBar: React.FC<ProgressBarProps> = ({
-    label,
-    uploadingPercentage,
-    processingPercentage,
-    status,
-    file,
-}) => {
-    let percentage: number = 0;
-
-    if (status === 'uploading' || status === 'finished') {
-        percentage = uploadingPercentage as number;
-    }
-
-    if (status === 'processing' || status === 'processing_finished') {
-        percentage = processingPercentage as number;
-    }
+const ProgressBar: React.FC<ProgressBarProps> = ({ label, uploadingPercentage, status, file }) => {
+    let percentage: number = uploadingPercentage || 0;
 
     return (
         <div className="w-full p-1">
             <div className="flex justify-between mb-1">
-                <text className="text-sm font-medium text-gray-200 truncate w-9/12">
-                    {label || file?.name}
-                </text>
+                <span className="text-sm font-medium text-gray-200 truncate w-9/12">{label || file?.name}</span>
                 <span className="text-sm font-medium text-gray-200 text-right w-max">
                     {'  ('}
                     {status || 'queued'}

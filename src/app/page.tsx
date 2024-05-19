@@ -70,6 +70,9 @@ const App: React.FC = () => {
 
     // Handle upload process
     const startUpload = useCallback(() => {
+        // Abort if upload has already started
+        if (startUploadTrigger) return;
+
         // Trigger simulation
         setStartUploadTrigger(true);
 
@@ -93,7 +96,7 @@ const App: React.FC = () => {
                 setStartUploadTrigger(false);
             }
         });
-    }, [queuedFiles, maxUploads]);
+    }, [queuedFiles, maxUploads, startUploadTrigger]);
 
     const handleFileDropAccepted = useCallback((files: Array<File>) => {
         // Update list of files with new files dropped
@@ -111,7 +114,7 @@ const App: React.FC = () => {
                 handleFileDropRejected={handleFileDropRejected}
                 handleFileDropAccepted={handleFileDropAccepted}
             />
-            <Button onClick={startUpload} disabled={startUploadTrigger || !queuedFiles.length}>
+            <Button onClick={startUpload} disabled={!queuedFiles.length}>
                 Start upload
             </Button>
             {startUploadTrigger && progresses?.length ? (

@@ -47,7 +47,7 @@ function* createUploader(
         )
             .then(response => {
                 // Emit success event to listener
-                emitter({ type: 'successful', response });
+                emitter({ type: 'finished', response });
             })
             .catch((error: Error) => {
                 // Emit failure event to listener
