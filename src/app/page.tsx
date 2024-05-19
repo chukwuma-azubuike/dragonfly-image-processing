@@ -83,12 +83,17 @@ const App: React.FC = () => {
             formData.append('file', file);
 
             try {
+                // TODO: Revert after simulation
                 // Fetch key and url for file staging process
-                const { url, key } = (await api.generateURL()).data;
+                // const { url, key } = (await api.generateURL()).data;
 
                 // Dispatch upload action for file & pass arguments for the processing step
                 dispatch(
-                    dataUpload({ name: file.name, maxUploads, url, processingKey: key }, api.uploadFile, formData)
+                    dataUpload(
+                        { name: file.name, maxUploads, url: 'url', processingKey: 'key' },
+                        api.uploadFile,
+                        formData
+                    )
                 );
             } catch (err: any) {
                 // Log error to remote service (e.g Sentry) or display in ui

@@ -25,39 +25,57 @@ function* createUploader(
     // Initialise an event channel for each file upload
     const chan: EventChannel<any> = eventChannel((emitter: (input: any | END) => void) => {
         // Capture upload progress. The "onUploadProgress" function is accepted as an optional config parameter in axios
-        function onUploadProgress(progressEvent: AxiosProgressEvent): void {
-            // Emit progress to listener
-            emitter(progressEvent);
-        }
+        // function onUploadProgress(progressEvent: AxiosProgressEvent): void {
+        //     // Emit progress to listener
+        //     emitter(progressEvent);
+        // }
+
+        // Mock upload progress behaviour
+
+        let loaded = 0;
+        const total = 500000;
+
+        setInterval(() => {
+            if (total <= loaded) {
+                emitter({ type: 'finished' });
+                emitter(END);
+            }
+
+            if (loaded < total) {
+                loaded = loaded + Math.round(Math.random()) * 10000;
+                console.log({ loaded, total });
+                emitter({ loaded, total });
+            }
+        }, 1000);
 
         // This function returns a function that invokes "apiMethod" with it's arguments spread over an array.
-        const invokeApiMethod: (...args: any[]) => Promise<any> = spread(apiMethod);
+        // const invokeApiMethod: (...args: any[]) => Promise<any> = spread(apiMethod);
 
-        invokeApiMethod(
-            /**
-             * "apiMethod" called with it's Arguments spread over as an array
-             */
-            [
-                url,
-                ...args,
-                {
-                    onUploadProgress,
-                },
-            ]
-        )
-            .then(response => {
-                // Emit success event to listener
-                emitter({ type: 'finished', response });
-            })
-            .catch((error: Error) => {
-                // Emit failure event to listener
-                emitter({ type: 'failure', id });
-                toast.error(error.message);
-            })
-            .finally(() => {
-                // Emit an abort signal to listener
-                emitter(END);
-            });
+        // invokeApiMethod(
+        //     /**
+        //      * "apiMethod" called with it's Arguments spread over as an array
+        //      */
+        //     [
+        //         url,
+        //         ...args,
+        //         {
+        //             onUploadProgress,
+        //         },
+        //     ]
+        // )
+        //     .then(response => {
+        //         // Emit success event to listener
+        //         emitter({ type: 'finished', response });
+        //     })
+        //     .catch((error: Error) => {
+        //         // Emit failure event to listener
+        //         emitter({ type: 'failure', id });
+        //         toast.error(error.message);
+        //     })
+        //     .finally(() => {
+        //         // Emit an abort signal to listener
+        //         emitter(END);
+        //     });
 
         return () => {
             return;
