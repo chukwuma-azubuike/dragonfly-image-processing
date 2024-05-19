@@ -43,7 +43,6 @@ function* createUploader(
 
             if (loaded < total) {
                 loaded = loaded + Math.round(Math.random()) * 10000;
-                console.log({ loaded, total });
                 emitter({ loaded, total });
             }
         }, 1000);
